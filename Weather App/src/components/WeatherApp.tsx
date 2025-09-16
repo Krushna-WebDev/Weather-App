@@ -1,6 +1,7 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 interface WeatherInterface {
+  id: number;
   name: string;
   temp: number;
   icon: string;
@@ -22,21 +23,33 @@ const WeatherApp = () => {
       alert("Already exists!");
       return;
     }
+    try {
+      const res = await axios.get(
+        `https://api.openweathermap.org/data/2.5/weather?q=${Input}&appid=${api}&units=metric`
+      );
+      console.log(res.data);
+      const newData = [
+        ...WeatherData,
+        {
+          id: res.data.id,
+          name: res.data.name,
+          temp: res.data.main.temp,
+          icon: res.data.weather[0].icon,
+        },
+      ];
+      setWeatherData(newData);
+      localStorage.setItem("data", JSON.stringify(newData));
+      setInput("");
+    } catch (error) {
+      alert("city not found");
+      setInput("");
+    }
+  };
 
-    const res = await axios.get(
-      `https://api.openweathermap.org/data/2.5/weather?q=${Input}&appid=${api}&units=metric`
-    );
-    const newData = [
-      ...WeatherData,
-      {
-        name: res.data.name,
-        temp: res.data.main.temp,
-        icon: res.data.weather[0].icon,
-      },
-    ];
-    setWeatherData(newData);
-    localStorage.setItem("data", JSON.stringify(newData));
-    setInput("");
+  const handleDelete = (id: number) => {
+    const updatedData = WeatherData.filter((data) => data.id !== id);
+    setWeatherData(updatedData);
+    localStorage.setItem("data", JSON.stringify(updatedData));
   };
   return (
     <>
@@ -68,9 +81,15 @@ const WeatherApp = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 px-4">
             {WeatherData.map((data, index) => (
               <div
-                key={index}
+                key={data.id}
                 className="bg-gray-800/40 backdrop-blur rounded-2xl shadow-2xl border border-gray-700/50 p-8 transform hover:scale-105 transition-all duration-300"
               >
+                <button
+                  className="text-red-600 font-bold "
+                  onClick={() => handleDelete(data.id)}
+                >
+                  X
+                </button>
                 <div className="flex flex-col items-center space-y-6">
                   <h2 className="text-3xl font-bold bg-gradient-to-r from-blue-400 to-cyan-300 bg-clip-text text-transparent">
                     {data.name}
